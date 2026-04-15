@@ -1,90 +1,235 @@
-# Orbital Propagator
+# 🛰️ Propagador Orbital
 
-Python-based orbital mechanics simulator for satellite trajectory analysis.
+Simulador de mecánica orbital en Python para análisis de trayectorias satelitales y planificación de misiones.
 
-## 🚧 Project Status
+![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/estado-activo-success)
 
-**Week 1 - In Progress**
+## 📋 Descripción General
 
-Building fundamental two-body orbital propagation with numerical integration.
+Propagador orbital numérico de alta precisión que implementa mecánica clásica de dos cuerpos con soporte para perturbaciones. Diseñado para aplicaciones de ingeniería aeroespacial, análisis de misiones y propósitos educativos.
 
-## 🎯 Objectives
+**Características Principales:**
+- ✅ Propagación orbital Kepleriana (problema de dos cuerpos)
+- ✅ Integración numérica de alta precisión (DOP853, rtol=1e-10)
+- ✅ Visualización de trayectorias en 2D/3D
+- ✅ Análisis y validación de elementos orbitales
+- ✅ Verificación de conservación de energía (error relativo < 1e-12)
+- 🚧 Modelado de perturbación J2 (planeado)
+- 🚧 Extensión para propulsión eléctrica de bajo empuje (planeado)
 
-- Implement Keplerian orbital propagation
-- Add J2 perturbation modeling
-- Develop orbital elements conversion utilities
-- Create visualization tools for 3D trajectories
-- Extend to low-thrust electric propulsion scenarios
+## 🎯 Objetivos del Proyecto
 
-## 📋 Planned Features
+Este proyecto forma parte de un portafolio técnico que demuestra capacidades en:
+- Computación científica y métodos numéricos
+- Mecánica orbital y astrodinámica
+- Mejores prácticas de ingeniería de software
+- Documentación técnica y visualización de datos
 
-- [x] Project structure setup
-- [ ] Two-body problem propagator
-- [ ] J2 perturbation
-- [ ] Orbital elements conversion
-- [ ] 3D visualization
-- [ ] Low-thrust propagation
-- [ ] Ground track visualization
-- [ ] Validation against poliastro
+**Dominio de aplicación objetivo:** Sistemas de propulsión eléctrica para pequeños satélites (CubeSats).
 
-## 🛠️ Tech Stack
+## 🖼️ Visualizaciones
 
-- Python 3.11+
-- NumPy - Numerical computations
-- SciPy - ODE integration
-- Matplotlib - Visualization
-- Astropy - Astronomical constants and units
+### Proyección Orbital 2D
+![Órbita 2D](docs/orbit_2d.png)
 
-## 📦 Installation
+### Vista de Trayectoria 3D
+![Órbita 3D](docs/orbit_3d.png)
+
+### Análisis de Elementos Orbitales
+![Elementos Orbitales](docs/orbital_elements.png)
+
+### Evolución de Componentes de Posición
+![Componentes de Posición](docs/position_components.png)
+
+## 🚀 Inicio Rápido
+
+### Instalación
 
 ```bash
-# Clone repository
+# Clonar repositorio
 git clone https://github.com/DZALuc/orbital-propagator.git
 cd orbital-propagator
 
-# Create virtual environment
+# Crear ambiente virtual
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # En Windows: venv\Scripts\activate
 
-# Install dependencies
+# Instalar dependencias
 pip install -r requirements.txt
 ```
 
-## 🚀 Quick Start
+### Uso Básico
 
-Coming soon...
+```python
+from src.propagator import OrbitalPropagator, circular_velocity, orbital_period
+from src.visualization import plot_orbit_3d
+import numpy as np
 
-## 📚 Theory Background
+# Configurar órbita terrestre a 400 km de altitud (tipo ISS)
+R_earth = 6371e3  # metros
+altitude = 400e3
+r_orbit = R_earth + altitude
 
-This project implements classical orbital mechanics based on:
-- Two-body problem formulation
-- Keplerian orbital elements
-- Numerical integration methods (Runge-Kutta)
-- Perturbation theory (J2 Earth oblateness)
+# Calcular parámetros de órbita circular
+v_circ = circular_velocity(r_orbit)
+T = orbital_period(r_orbit)
 
-## 🔗 References
+# Condiciones iniciales
+r0 = np.array([r_orbit, 0.0, 0.0])  # Posición [m]
+v0 = np.array([0.0, v_circ, 0.0])   # Velocidad [m/s]
 
-- Bate, R., Mueller, D., White, J. (1971). *Fundamentals of Astrodynamics*
-- Curtis, H. (2013). *Orbital Mechanics for Engineering Students*
-- Vallado, D. (2013). *Fundamentals of Astrodynamics and Applications*
+# Propagar órbita
+prop = OrbitalPropagator()
+solution = prop.propagate(r0, v0, t_span=(0, T), dt=60.0)
 
-## 👤 Author
+# Visualizar
+plot_orbit_3d(solution)
+```
+
+### Ejecutar Ejemplos
+
+```bash
+# Probar propagación de órbita circular
+python examples/test_circular.py
+
+# Generar visualizaciones
+python examples/visualize_orbit.py
+```
+
+## 📊 Resultados de Validación
+
+**Órbita Circular LEO (400 km de altitud):**
+- Periodo orbital: 92.68 minutos
+- Error de cierre de órbita: 51 m (0.00012% de la circunferencia orbital)
+- Conservación de energía: Error relativo 7.91×10⁻¹³ (precisión de máquina)
+- Método de integración: DOP853 (Dormand-Prince orden 8)
+
+## 🛠️ Stack Técnico
+
+- **Python 3.11+** - Lenguaje principal
+- **NumPy** - Cálculos numéricos y álgebra lineal
+- **SciPy** - Integración de EDOs (`solve_ivp` con paso adaptativo)
+- **Matplotlib** - Visualización 2D/3D
+- **Astropy** - Constantes astronómicas y conversiones de unidades
+
+## 📚 Fundamentos Teóricos
+
+### Problema de Dos Cuerpos
+
+El propagador resuelve la ecuación gravitacional de Newton:
+
+d²r/dt² = -μ/r³ · r
+
+Donde:
+- `r` = vector de posición (m)
+- `μ` = GM = parámetro gravitacional (3.986×10¹⁴ m³/s² para la Tierra)
+- `t` = tiempo (s)
+
+### Integración Numérica
+
+Utiliza **scipy.integrate.solve_ivp** con:
+- **Método:** DOP853 (Dormand-Prince de orden 8, Runge-Kutta)
+- **Tolerancias:** rtol=1e-10, atol=1e-12
+- **Paso adaptativo** para balance óptimo entre precisión y rendimiento
+
+### Conservación de Energía
+
+La energía orbital específica es una cantidad conservada:
+
+ε = v²/2 - μ/r = constante
+
+Cualquier desviación de energía constante indica error de integración numérica.
+
+## 🗂️ Estructura del Proyecto
+
+orbital-propagator/
+├── src/
+│   ├── propagator.py       # Motor de propagación principal
+│   ├── visualization.py    # Utilidades de graficación
+│   └── utils.py           # Funciones auxiliares
+├── examples/
+│   ├── test_circular.py   # Validación de órbita circular
+│   └── visualize_orbit.py # Generar gráficas
+├── docs/                   # Gráficas y documentación generadas
+├── tests/                  # Pruebas unitarias (planeadas)
+├── notebooks/             # Exploración en Jupyter (planeado)
+├── README.md
+├── requirements.txt
+├── LICENSE
+└── .gitignore
+
+## 🛣️ Hoja de Ruta
+
+### Fase 1: Fundamentos ✅ (Actual)
+- [x] Propagador de dos cuerpos
+- [x] Validación de órbita circular
+- [x] Visualización 2D/3D
+- [x] Verificación de conservación de energía
+
+### Fase 2: Perturbaciones 🚧 (En Progreso)
+- [ ] Perturbación J2 (achatamiento terrestre)
+- [ ] Soporte para órbitas elípticas
+- [ ] Conversión de elementos orbitales (Cartesianos ↔ Keplerianos)
+- [ ] Validación contra poliastro/GMAT
+
+### Fase 3: Características Avanzadas (Planeado)
+- [ ] Modelado de propulsión eléctrica de bajo empuje
+- [ ] Arrastre atmosférico (modelo exponencial)
+- [ ] Perturbaciones de tercer cuerpo (Luna, Sol)
+- [ ] Visualización de trazas terrestres
+- [ ] Calculadora de ΔV para misiones
+
+### Fase 4: Optimización (Futuro)
+- [ ] Perfilado y optimización de rendimiento
+- [ ] Integradores simplécticos para estabilidad a largo plazo
+- [ ] Propagación paralela para análisis Monte Carlo
+- [ ] Aceleración con C/Cython para bucles críticos
+
+## 📖 Referencias
+
+1. **Bate, R., Mueller, D., White, J.** (1971). *Fundamentals of Astrodynamics*. Dover.
+2. **Curtis, H.** (2013). *Orbital Mechanics for Engineering Students* (3ra ed.). Butterworth-Heinemann.
+3. **Vallado, D.** (2013). *Fundamentals of Astrodynamics and Applications* (4ta ed.). Microcosm Press.
+4. **Dormand, J. R., Prince, P. J.** (1980). "A family of embedded Runge-Kutta formulae". *Journal of Computational and Applied Mathematics*, 6(1), 19-26.
+
+## 👤 Autor
 
 **Damián Zúñiga Avelar**
+- 🎓 Lic. en Física Aplicada (CIICAp-UAEM)
+- 💼 Desarrollador II @ Garrido Licona y Asociados
+- 🔬 Experiencia previa: Análisis CFD/FEM (Mayekawa)
+- 🎯 Objetivo de transición profesional: Ingeniería de Propulsión Eléctrica / Sistemas Espaciales
+
+**Contacto:**
 - GitHub: [@DZALuc](https://github.com/DZALuc)
-- LinkedIn: [damianzuñiga](https://linkedin.com/in/damianzuñiga)
+- LinkedIn: [Damián Zúñiga](https://linkedin.com/in/damianzuñiga)
+- Email: damianzu94@gmail.com
 
-## 📄 License
+## 📄 Licencia
 
-MIT License - See LICENSE file for details
+Este proyecto está licenciado bajo la **Licencia MIT** - ver el archivo [LICENSE](LICENSE) para detalles.
 
-## 🛣️ Roadmap
+## 🙏 Agradecimientos
 
-**Phase 1 (Current):** Basic Keplerian propagation  
-**Phase 2:** Perturbations and validation  
-**Phase 3:** Low-thrust extension for electric propulsion  
-**Phase 4:** Advanced features and optimization
+- **Proyecto Astropy** - Constantes astronómicas de alta precisión
+- **Comunidad SciPy** - Herramientas robustas de integración de EDOs
+- **Curtis, H.** - Excelente libro de texto sobre mecánica orbital
+- **CIICAp-UAEM** - Formación fundamental en física
 
 ---
 
-*Part of a portfolio building effort toward aerospace/space sector transition, with focus on electric propulsion systems and scientific software development.*
+## 🌟 Estado del Proyecto
+
+**Desarrollo Activo** - Esta es la Semana 1 de un ciclo de proyecto planeado de 6 semanas.
+
+Actualizaciones futuras incluirán perturbaciones J2, modelado de bajo empuje, y validación contra herramientas establecidas (poliastro, GMAT).
+
+⭐ **Dale una estrella a este repo** si te resulta útil para aprender mecánica orbital!
+
+---
+
+*Construido como parte de un portafolio técnico que demuestra habilidades de computación científica y experiencia en el dominio de ingeniería aeroespacial. Este proyecto sirve como fundamento para trabajo avanzado en sistemas de propulsión eléctrica y análisis de misiones.*
+
+
