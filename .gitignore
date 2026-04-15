@@ -23,7 +23,7 @@ ENV/
 Thumbs.db
 
 # Project specific
-docs/*.png
+# docs/*.png
 docs/*.pdf
 results/
 *.log
