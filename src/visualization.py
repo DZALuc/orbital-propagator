@@ -495,3 +495,153 @@ def plot_orbital_elements_evolution(solution, mu=3.986004418e14,
         plt.show()
     
     return fig, axes    
+
+
+
+
+def plot_j2_comparison_3d(solution_no_j2, solution_j2, R_body=6371e3,
+                          title="Comparación: Propagación con/sin J2",
+                          save_path=None, show=True):
+    """
+    Compara dos trayectorias orbitales en 3D: con y sin perturbación J2.
+    
+    Muestra visualmente cómo las órbitas divergen debido a J2.
+    
+    Parameters
+    ----------
+    solution_no_j2 : dict
+        Solución sin J2 (modelo ideal)
+    solution_j2 : dict
+        Solución con J2 (modelo realista)
+    R_body : float, optional
+        Radio del cuerpo central en metros
+    title : str, optional
+        Título de la figura
+    save_path : str, optional
+        Ruta para guardar
+    show : bool, optional
+        Mostrar figura
+    
+    Returns
+    -------
+    fig, ax : matplotlib figure y axis 3D
+    """
+    # Extraer datos
+    r_no_j2 = solution_no_j2['r']
+    r_j2 = solution_j2['r']
+    
+    # Convertir a km
+    x_no_j2 = r_no_j2[:, 0] / 1e3
+    y_no_j2 = r_no_j2[:, 1] / 1e3
+    z_no_j2 = r_no_j2[:, 2] / 1e3
+    
+    x_j2 = r_j2[:, 0] / 1e3
+    y_j2 = r_j2[:, 1] / 1e3
+    z_j2 = r_j2[:, 2] / 1e3
+    
+    R_body_km = R_body / 1e3
+    
+    # Crear figura 3D
+    fig = plt.figure(figsize=(14, 10))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Dibujar Tierra como esfera wireframe
+    u = np.linspace(0, 2 * np.pi, 40)
+    v = np.linspace(0, np.pi, 40)
+    x_sphere = R_body_km * np.outer(np.cos(u), np.sin(v))
+    y_sphere = R_body_km * np.outer(np.sin(u), np.sin(v))
+    z_sphere = R_body_km * np.outer(np.ones(np.size(u)), np.cos(v))
+    
+    ax.plot_surface(x_sphere, y_sphere, z_sphere, 
+                    color='#2E86AB', alpha=0.15, shade=True)
+    
+    # Plot órbita SIN J2 (azul)
+    ax.plot(x_no_j2, y_no_j2, z_no_j2, 
+            'b-', linewidth=2, alpha=0.7, label='Sin J2 (ideal)')
+    
+    # Plot órbita CON J2 (roja)
+    ax.plot(x_j2, y_j2, z_j2, 
+            'r--', linewidth=2, alpha=0.8, label='Con J2 (realista)')
+    
+    # Marcar puntos inicial y final
+    # Inicial (verde)
+    ax.scatter(x_no_j2[0], y_no_j2[0], z_no_j2[0], 
+               color='green', s=150, marker='o', 
+               label='Inicio', zorder=5, edgecolors='darkgreen', linewidths=2)
+    
+    # Final sin J2 (azul oscuro)
+    ax.scatter(x_no_j2[-1], y_no_j2[-1], z_no_j2[-1], 
+               color='darkblue', s=150, marker='s', 
+               label='Final sin J2', zorder=5, edgecolors='blue', linewidths=2)
+    
+    # Final con J2 (rojo oscuro)
+    ax.scatter(x_j2[-1], y_j2[-1], z_j2[-1], 
+               color='darkred', s=150, marker='s', 
+               label='Final con J2', zorder=5, edgecolors='red', linewidths=2)
+    
+    # Línea conectando posiciones finales (muestra divergencia)
+    ax.plot([x_no_j2[-1], x_j2[-1]], 
+            [y_no_j2[-1], y_j2[-1]], 
+            [z_no_j2[-1], z_j2[-1]], 
+            'k--', linewidth=2, alpha=0.5, label='Divergencia')
+    
+    # Calcular divergencia
+    divergence = np.linalg.norm(r_j2[-1] - r_no_j2[-1])
+    
+    # Dibujar ejes coordenados
+    axis_length = R_body_km * 1.8
+    ax.plot([0, axis_length], [0, 0], [0, 0], 'r-', linewidth=1, alpha=0.4)
+    ax.plot([0, 0], [0, axis_length], [0, 0], 'g-', linewidth=1, alpha=0.4)
+    ax.plot([0, 0], [0, 0], [0, axis_length], 'b-', linewidth=1, alpha=0.4)
+    
+    # Etiquetas de ejes
+    ax.text(axis_length*1.1, 0, 0, 'X', color='red', fontsize=11)
+    ax.text(0, axis_length*1.1, 0, 'Y', color='green', fontsize=11)
+    ax.text(0, 0, axis_length*1.1, 'Z', color='blue', fontsize=11)
+    
+    # Configuración de ejes
+    ax.set_xlabel('X (km)', fontsize=11)
+    ax.set_ylabel('Y (km)', fontsize=11)
+    ax.set_zlabel('Z (km)', fontsize=11)
+    ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+    
+    # Aspect ratio igual
+    all_x = np.concatenate([x_no_j2, x_j2])
+    all_y = np.concatenate([y_no_j2, y_j2])
+    all_z = np.concatenate([z_no_j2, z_j2])
+    
+    max_range = np.max([all_x.max()-all_x.min(), 
+                        all_y.max()-all_y.min(), 
+                        all_z.max()-all_z.min()]) / 2
+    
+    mid_x = (all_x.max() + all_x.min()) / 2
+    mid_y = (all_y.max() + all_y.min()) / 2
+    mid_z = (all_z.max() + all_z.min()) / 2
+    
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
+    
+    # Ángulo de vista
+    ax.view_init(elev=20, azim=45)
+    
+    # Leyenda (lado derecho superior)
+    ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
+    
+    # Texto con información de divergencia (lado izquierdo inferior)
+    info_text = f"Divergencia final: {divergence/1e3:.1f} km\n"
+    info_text += f"Tiempo simulado: {solution_j2['t'][-1]/3600:.1f} horas"
+    
+    ax.text2D(0.02, 0.12, info_text, transform=ax.transAxes,
+              verticalalignment='bottom', fontsize=10,
+              bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"✓ Figura guardada: {save_path}")
+    
+    if show:
+        plt.show()
+    
+    return fig, ax    
