@@ -12,12 +12,15 @@ Propagador orbital numérico de alta precisión que implementa mecánica clásic
 
 **Características Principales:**
 - ✅ Propagación orbital Kepleriana (problema de dos cuerpos)
+- ✅ **Soporte para órbitas circulares y elípticas**
+- ✅ **Perturbación J2 (achatamiento terrestre)**
+- ✅ **Conversión Cartesiano ↔ Kepleriano (elementos orbitales)**
 - ✅ Integración numérica de alta precisión (DOP853, rtol=1e-10)
 - ✅ Visualización de trayectorias en 2D/3D
 - ✅ Análisis y validación de elementos orbitales
 - ✅ Verificación de conservación de energía (error relativo < 1e-12)
-- 🚧 Modelado de perturbación J2 (planeado)
 - 🚧 Extensión para propulsión eléctrica de bajo empuje (planeado)
+- 🚧 Validación contra poliastro/GMAT (planeado)
 
 ## 🎯 Objetivos del Proyecto
 
@@ -104,7 +107,24 @@ python examples/visualize_orbit.py
 - Periodo orbital: 92.68 minutos
 - Error de cierre de órbita: 51 m (0.00012% de la circunferencia orbital)
 - Conservación de energía: Error relativo 7.91×10⁻¹³ (precisión de máquina)
-- Método de integración: DOP853 (Dormand-Prince orden 8)
+
+**Órbita Elíptica (400 km × 2000 km):**
+- Excentricidad: 0.1058
+- Error en perigeo: 2.3 m
+- Error en apogeo: 2.4 m
+- Conservación de elementos orbitales: < 5×10⁻⁵%
+
+**Perturbación J2:**
+- Desviación después de 5 órbitas polares (800 km): 1,225 km
+- Ratio J2/Two-body: 0.013% (efecto pequeño pero acumulativo)
+- Crítico para predicciones precisas a largo plazo
+
+**Conversión de Elementos Orbitales:**
+- 6 casos de prueba: circular, elíptica, polar, inclinada, GEO, Molniya
+- Error de conversión (ida y vuelta): < 1×10⁻⁶ m (precisión de máquina)
+- Todas las pruebas exitosas
+
+**Método de integración:** DOP853 (Dormand-Prince orden 8) con tolerancias rtol=1e-10, atol=1e-12
 
 ## 🛠️ Stack Técnico
 
@@ -162,19 +182,20 @@ orbital-propagator/
 
 ## 🛣️ Hoja de Ruta
 
-### Fase 1: Fundamentos ✅ (Actual)
+### Fase 1: Fundamentos ✅ (Completada)
 - [x] Propagador de dos cuerpos
 - [x] Validación de órbita circular
+- [x] Soporte para órbitas elípticas
 - [x] Visualización 2D/3D
 - [x] Verificación de conservación de energía
 
-### Fase 2: Perturbaciones 🚧 (En Progreso)
-- [ ] Perturbación J2 (achatamiento terrestre)
-- [ ] Soporte para órbitas elípticas
-- [ ] Conversión de elementos orbitales (Cartesianos ↔ Keplerianos)
+### Fase 2: Perturbaciones ✅ (Completada)
+- [x] Perturbación J2 (achatamiento terrestre)
+- [x] Conversión de elementos orbitales (Cartesianos ↔ Keplerianos)
+- [x] Validación numérica con 6 tipos de órbitas
 - [ ] Validación contra poliastro/GMAT
 
-### Fase 3: Características Avanzadas (Planeado)
+### Fase 3: Características Avanzadas 🚧 (En Progreso)
 - [ ] Modelado de propulsión eléctrica de bajo empuje
 - [ ] Arrastre atmosférico (modelo exponencial)
 - [ ] Perturbaciones de tercer cuerpo (Luna, Sol)
