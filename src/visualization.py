@@ -323,3 +323,175 @@ def plot_position_components(solution, save_path=None, show=True):
         plt.show()
     
     return fig, ax
+
+
+def plot_orbital_elements_evolution(solution, mu=3.986004418e14, 
+                                     solution_j2=None, 
+                                     title="Evolución de Elementos Orbitales",
+                                     save_path=None, show=True):
+    """
+    Grafica evolución de elementos orbitales en el tiempo.
+    
+    Muestra cómo los 6 elementos Keplerianos cambian durante la propagación.
+    Si se proporciona solution_j2, compara con/sin perturbación J2.
+    
+    Parameters
+    ----------
+    solution : dict
+        Solución de propagación (sin J2 o referencia)
+    mu : float, optional
+        Parámetro gravitacional
+    solution_j2 : dict, optional
+        Solución con J2 para comparación
+    title : str, optional
+        Título de la figura
+    save_path : str, optional
+        Ruta para guardar figura
+    show : bool, optional
+        Mostrar figura
+    
+    Returns
+    -------
+    fig, axes : matplotlib figure y array de axes
+    """
+    from src.orbital_elements import cartesian_to_keplerian
+    
+    # Calcular elementos orbitales para cada punto
+    n_points = len(solution['t'])
+    
+    elements_base = {
+        'a': np.zeros(n_points),
+        'e': np.zeros(n_points),
+        'i': np.zeros(n_points),
+        'RAAN': np.zeros(n_points),
+        'omega': np.zeros(n_points),
+        'nu': np.zeros(n_points)
+    }
+    
+    print("Calculando elementos orbitales base...")
+    for idx in range(n_points):
+        elem = cartesian_to_keplerian(solution['r'][idx], solution['v'][idx], mu)
+        elements_base['a'][idx] = elem['a']
+        elements_base['e'][idx] = elem['e']
+        elements_base['i'][idx] = elem['i']
+        elements_base['RAAN'][idx] = elem['RAAN']
+        elements_base['omega'][idx] = elem['omega']
+        elements_base['nu'][idx] = elem['nu']
+    
+    # Si hay solución J2, calcular elementos para ella también
+    if solution_j2 is not None:
+        elements_j2 = {
+            'a': np.zeros(n_points),
+            'e': np.zeros(n_points),
+            'i': np.zeros(n_points),
+            'RAAN': np.zeros(n_points),
+            'omega': np.zeros(n_points),
+            'nu': np.zeros(n_points)
+        }
+        
+        print("Calculando elementos orbitales con J2...")
+        for idx in range(n_points):
+            elem = cartesian_to_keplerian(solution_j2['r'][idx], solution_j2['v'][idx], mu)
+            elements_j2['a'][idx] = elem['a']
+            elements_j2['e'][idx] = elem['e']
+            elements_j2['i'][idx] = elem['i']
+            elements_j2['RAAN'][idx] = elem['RAAN']
+            elements_j2['omega'][idx] = elem['omega']
+            elements_j2['nu'][idx] = elem['nu']
+    
+    # Tiempo en horas
+    t_hours = solution['t'] / 3600
+    
+    # Crear figura con 6 subplots (3 filas, 2 columnas)
+    fig, axes = plt.subplots(3, 2, figsize=(14, 12))
+    fig.suptitle(title, fontsize=16, fontweight='bold', y=0.995)
+    
+    # Plot 1: Semieje Mayor
+    ax = axes[0, 0]
+    ax.plot(t_hours, elements_base['a']/1e3, 'b-', linewidth=1.5, label='Sin J2' if solution_j2 else 'Propagación')
+    if solution_j2 is not None:
+        ax.plot(t_hours, elements_j2['a']/1e3, 'r--', linewidth=1.5, label='Con J2')
+    ax.set_ylabel('Semieje mayor (km)', fontsize=11)
+    ax.set_title('(a) Semieje Mayor', fontsize=12, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best', fontsize=9)
+    
+    # Plot 2: Excentricidad
+    ax = axes[0, 1]
+    ax.plot(t_hours, elements_base['e'], 'b-', linewidth=1.5, label='Sin J2' if solution_j2 else 'Propagación')
+    if solution_j2 is not None:
+        ax.plot(t_hours, elements_j2['e'], 'r--', linewidth=1.5, label='Con J2')
+    ax.set_ylabel('Excentricidad', fontsize=11)
+    ax.set_title('(b) Excentricidad', fontsize=12, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best', fontsize=9)
+    
+    # Plot 3: Inclinación
+    ax = axes[1, 0]
+    ax.plot(t_hours, np.degrees(elements_base['i']), 'b-', linewidth=1.5, label='Sin J2' if solution_j2 else 'Propagación')
+    if solution_j2 is not None:
+        ax.plot(t_hours, np.degrees(elements_j2['i']), 'r--', linewidth=1.5, label='Con J2')
+    ax.set_ylabel('Inclinación (°)', fontsize=11)
+    ax.set_title('(c) Inclinación', fontsize=12, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best', fontsize=9)
+    
+    # Plot 4: RAAN (¡Aquí se ve el efecto J2!)
+    ax = axes[1, 1]
+    
+    # Unwrap RAAN para evitar saltos 2π → 0
+    RAAN_base_unwrapped = np.unwrap(elements_base['RAAN'])
+    ax.plot(t_hours, np.degrees(RAAN_base_unwrapped), 'b-', linewidth=1.5, label='Sin J2' if solution_j2 else 'Propagación')
+    
+    if solution_j2 is not None:
+        RAAN_j2_unwrapped = np.unwrap(elements_j2['RAAN'])
+        ax.plot(t_hours, np.degrees(RAAN_j2_unwrapped), 'r--', linewidth=1.5, label='Con J2')
+    
+    ax.set_ylabel('RAAN - Ω (°)', fontsize=11)
+    ax.set_title('(d) Ascensión Recta del Nodo Ascendente', fontsize=12, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best', fontsize=9)
+    
+    # Plot 5: Argumento del Perigeo
+    ax = axes[2, 0]
+    omega_base_unwrapped = np.unwrap(elements_base['omega'])
+    ax.plot(t_hours, np.degrees(omega_base_unwrapped), 'b-', linewidth=1.5, label='Sin J2' if solution_j2 else 'Propagación')
+    
+    if solution_j2 is not None:
+        omega_j2_unwrapped = np.unwrap(elements_j2['omega'])
+        ax.plot(t_hours, np.degrees(omega_j2_unwrapped), 'r--', linewidth=1.5, label='Con J2')
+    
+    ax.set_ylabel('Argumento Perigeo - ω (°)', fontsize=11)
+    ax.set_xlabel('Tiempo (horas)', fontsize=11)
+    ax.set_title('(e) Argumento del Perigeo', fontsize=12, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best', fontsize=9)
+    
+    # Plot 6: Anomalía Verdadera (opcional) o Altitud
+    ax = axes[2, 1]
+    
+    # Calcular altitud (más útil que anomalía verdadera)
+    R_earth = 6371e3
+    altitude_base = (np.linalg.norm(solution['r'], axis=1) - R_earth) / 1e3
+    ax.plot(t_hours, altitude_base, 'b-', linewidth=1.5, label='Sin J2' if solution_j2 else 'Propagación')
+    
+    if solution_j2 is not None:
+        altitude_j2 = (np.linalg.norm(solution_j2['r'], axis=1) - R_earth) / 1e3
+        ax.plot(t_hours, altitude_j2, 'r--', linewidth=1.5, label='Con J2')
+    
+    ax.set_ylabel('Altitud (km)', fontsize=11)
+    ax.set_xlabel('Tiempo (horas)', fontsize=11)
+    ax.set_title('(f) Altitud sobre la Tierra', fontsize=12, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='best', fontsize=9)
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"✓ Figura guardada: {save_path}")
+    
+    if show:
+        plt.show()
+    
+    return fig, axes    

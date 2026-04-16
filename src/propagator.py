@@ -288,9 +288,6 @@ class OrbitalPropagator:
 
 
 
-
-
-
 # Utility functions
 
 def orbital_period(a, mu=const.GM_earth.value):
