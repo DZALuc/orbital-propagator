@@ -79,6 +79,78 @@ class OrbitalPropagator:
         
         return derivatives
     
+
+    def equations_of_motion_j2(self, t, state, J2=1.08263e-3, R_earth=6378137.0):
+            """
+            Ecuaciones de movimiento con perturbación J2 (achatamiento terrestre).
+            
+            Incluye el término de perturbación debido a la no-esfericidad de la Tierra.
+            El término J2 representa el achatamiento polar.
+            
+            Parameters
+            ----------
+            t : float
+                Tiempo (segundos)
+            state : array_like, shape (6,)
+                Vector de estado [x, y, z, vx, vy, vz]
+            J2 : float, optional
+                Coeficiente del segundo armónico zonal (default: 1.08263e-3 para Tierra)
+            R_earth : float, optional
+                Radio ecuatorial de la Tierra en metros (default: 6378137.0 m)
+            
+            Returns
+            -------
+            derivatives : ndarray, shape (6,)
+                Derivadas del estado [vx, vy, vz, ax, ay, az]
+            
+            Notes
+            -----
+            La aceleración total es:
+            a = a_two_body + a_J2
+            
+            donde a_J2 incluye términos que dependen de la posición z (latitud).
+            
+            Referencias
+            -----------
+            Vallado, D. (2013). Fundamentals of Astrodynamics and Applications.
+            """
+            # Extraer posición y velocidad
+            r_vec = state[0:3]
+            v_vec = state[3:6]
+            
+            x, y, z = r_vec
+            r = np.linalg.norm(r_vec)
+            
+            # Aceleración de dos cuerpos (término principal)
+            a_two_body = -(self.mu / r**3) * r_vec
+            
+            # Perturbación J2
+            # Factor común
+            factor = (3.0 / 2.0) * J2 * self.mu * R_earth**2 / r**5
+            
+            # Componentes de aceleración J2
+            # a_J2_x = factor * x * (5*z²/r² - 1)
+            # a_J2_y = factor * y * (5*z²/r² - 1)
+            # a_J2_z = factor * z * (5*z²/r² - 3)
+            
+            z2_r2 = (z / r)**2  # (z/r)²
+            
+            a_j2_x = factor * x * (5 * z2_r2 - 1)
+            a_j2_y = factor * y * (5 * z2_r2 - 1)
+            a_j2_z = factor * z * (5 * z2_r2 - 3)
+            
+            a_j2 = np.array([a_j2_x, a_j2_y, a_j2_z])
+            
+            # Aceleración total
+            a_total = a_two_body + a_j2
+            
+            # Derivadas
+            derivatives = np.concatenate([v_vec, a_total])
+            
+            return derivatives
+
+
+
     def propagate(self, r0, v0, t_span, dt=60.0, method='DOP853', 
                   rtol=1e-10, atol=1e-12):
         """
@@ -152,6 +224,71 @@ class OrbitalPropagator:
         }
         
         return solution
+
+    def propagate_j2(self, r0, v0, t_span, dt=60.0, J2=1.08263e-3, 
+                     R_earth=6378137.0, method='DOP853', rtol=1e-10, atol=1e-12):
+        """
+        Propagar órbita con perturbación J2.
+        
+        Parameters
+        ----------
+        r0 : array_like, shape (3,)
+            Posición inicial [x, y, z] en metros
+        v0 : array_like, shape (3,)
+            Velocidad inicial [vx, vy, vz] en m/s
+        t_span : tuple of float
+            Rango de integración (t_start, t_end) en segundos
+        dt : float, optional
+            Paso de salida en segundos (default: 60)
+        J2 : float, optional
+            Coeficiente J2 (default: 1.08263e-3 para Tierra)
+        R_earth : float, optional
+            Radio ecuatorial (default: 6378137.0 m)
+        method : str, optional
+            Método de integración (default: 'DOP853')
+        rtol : float, optional
+            Tolerancia relativa (default: 1e-10)
+        atol : float, optional
+            Tolerancia absoluta (default: 1e-12)
+        
+        Returns
+        -------
+        solution : dict
+            Diccionario con 't', 'r', 'v', 'success', 'message'
+        """
+        # Estado inicial
+        state0 = np.concatenate([r0, v0])
+        
+        # Puntos de evaluación
+        t_eval = np.arange(t_span[0], t_span[1], dt)
+        
+        # Integrar con J2
+        sol = solve_ivp(
+            fun=lambda t, y: self.equations_of_motion_j2(t, y, J2, R_earth),
+            t_span=t_span,
+            y0=state0,
+            method=method,
+            t_eval=t_eval,
+            rtol=rtol,
+            atol=atol,
+            dense_output=False
+        )
+        
+        # Extraer resultados
+        solution = {
+            't': sol.t,
+            'r': sol.y[0:3, :].T,
+            'v': sol.y[3:6, :].T,
+            'success': sol.success,
+            'message': sol.message
+        }
+        
+        return solution    
+
+
+
+
+
 
 
 # Utility functions

@@ -90,6 +90,7 @@ def main():
     # Regenerate for display
     plot_orbit_2d(solution, R_body=R_earth, show=True)
     plot_orbit_3d(solution, R_body=R_earth, show=True)
+    
     plot_orbital_elements(solution, mu=mu, show=True)
     plot_position_components(solution, show=True)
 
