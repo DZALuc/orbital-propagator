@@ -46,6 +46,30 @@ Este proyecto forma parte de un portafolio técnico que demuestra capacidades en
 ### Evolución de Componentes de Posición
 ![Componentes de Posición](docs/position_components.png)
 
+### Efectos de J2 en Elementos Orbitales
+![Efectos J2](docs/j2_orbital_elements_evolution.png)
+
+Gráfica de 6 paneles mostrando cómo la perturbación J2 afecta los elementos Keplerianos. Notable:
+- **Precesión nodal (RAAN):** -2.9°/día visible
+- **Rotación de ápsides (ω):** regresiva para i=65°
+- **Oscilaciones periódicas** en a, e, i (física real, no errores numéricos)
+
+### Comparación 3D: Con J2 vs Sin J2
+![Comparación J2 3D](docs/j2_comparison_3d.png)
+
+Visualización 3D mostrando divergencia de trayectorias:
+- **Azul:** Modelo ideal (sin J2)
+- **Roja:** Modelo realista (con J2)
+- **Divergencia:** ~3,000 km después de 20 órbitas (33.5 horas)
+
+### Ground Track (Traza Terrestre)
+![Ground Track](docs/ground_track.png)
+
+Proyección lat/lon de la órbita sobre la superficie terrestre. Muestra:
+- Patrón sinusoidal entre ±51.6° (inclinación orbital)
+- Regresión nodal por rotación terrestre (~22°/órbita hacia oeste)
+- 5 pasadas completas en 8 horas
+
 ## 🚀 Inicio Rápido
 
 ### Instalación
