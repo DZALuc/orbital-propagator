@@ -645,3 +645,166 @@ def plot_j2_comparison_3d(solution_no_j2, solution_j2, R_body=6371e3,
         plt.show()
     
     return fig, ax    
+
+
+
+def plot_ground_track(solution, title="Ground Track - Trayectoria del Satélite",
+                      earth_rotation=True, save_path=None, show=True):
+    """
+    Grafica la traza terrestre (ground track) del satélite.
+    
+    Proyecta la órbita 3D sobre la superficie terrestre mostrando
+    latitud y longitud del sub-punto satelital.
+    
+    Parameters
+    ----------
+    solution : dict
+        Solución de propagación orbital
+    title : str, optional
+        Título de la figura
+    earth_rotation : bool, optional
+        Si True, considera rotación terrestre (default: True)
+    save_path : str, optional
+        Ruta para guardar
+    show : bool, optional
+        Mostrar figura
+    
+    Returns
+    -------
+    fig, ax : matplotlib figure y axis
+    """
+    # Extraer datos
+    r = solution['r']  # Posiciones en ECEF
+    t = solution['t']  # Tiempos
+    
+    # Convertir coordenadas Cartesianas a Latitud/Longitud
+    latitudes = []
+    longitudes = []
+    
+    # Velocidad angular de la Tierra (rad/s)
+    omega_earth = 7.2921159e-5  # rad/s
+    
+    for i, pos in enumerate(r):
+        x, y, z = pos
+        
+        # Radio desde el centro
+        r_mag = np.linalg.norm(pos)
+        
+        # Latitud (geodética simplificada)
+        lat = np.arcsin(z / r_mag)
+        
+        # Longitud (considerando rotación terrestre si está habilitado)
+        if earth_rotation:
+            # La Tierra rota bajo el satélite
+            lon = np.arctan2(y, x) - omega_earth * t[i]
+        else:
+            # Sin rotación terrestre (sistema inercial)
+            lon = np.arctan2(y, x)
+        
+        # Normalizar longitud a [-π, π]
+        lon = np.arctan2(np.sin(lon), np.cos(lon))
+        
+        # Convertir a grados
+        latitudes.append(np.degrees(lat))
+        longitudes.append(np.degrees(lon))
+    
+    latitudes = np.array(latitudes)
+    longitudes = np.array(longitudes)
+    
+    # Crear figura
+    fig, ax = plt.subplots(figsize=(16, 9))
+    
+    # Dibujar mapa base simple
+    # Continentes simplificados (rectángulos aproximados)
+    # Esto es solo decorativo - la traza es lo importante
+    ax.fill([-180, 180, 180, -180], [-90, -90, 90, 90], 
+            color='lightblue', alpha=0.3, label='Océanos')
+    
+    # Dibujar grid de lat/lon
+    # Meridianos (longitud)
+    for lon in range(-180, 181, 30):
+        ax.plot([lon, lon], [-90, 90], 'k-', linewidth=0.5, alpha=0.3)
+    
+    # Paralelos (latitud)
+    for lat in range(-90, 91, 30):
+        ax.plot([-180, 180], [lat, lat], 'k-', linewidth=0.5, alpha=0.3)
+    
+    # Ecuador y meridiano de Greenwich (más gruesos)
+    ax.plot([-180, 180], [0, 0], 'k-', linewidth=1.5, alpha=0.5, label='Ecuador')
+    ax.plot([0, 0], [-90, 90], 'k-', linewidth=1.5, alpha=0.5, label='Meridiano 0°')
+    
+    # Plot ground track
+    # Dividir en segmentos cuando cruza el anti-meridiano (±180°)
+    segments = []
+    current_segment_lon = []
+    current_segment_lat = []
+    
+    for i in range(len(longitudes)):
+        if i > 0 and abs(longitudes[i] - longitudes[i-1]) > 180:
+            # Cruce del anti-meridiano
+            if len(current_segment_lon) > 0:
+                segments.append((current_segment_lon.copy(), current_segment_lat.copy()))
+            current_segment_lon = [longitudes[i]]
+            current_segment_lat = [latitudes[i]]
+        else:
+            current_segment_lon.append(longitudes[i])
+            current_segment_lat.append(latitudes[i])
+    
+    # Añadir último segmento
+    if len(current_segment_lon) > 0:
+        segments.append((current_segment_lon, current_segment_lat))
+    
+    # Dibujar todos los segmentos
+    for idx, (seg_lon, seg_lat) in enumerate(segments):
+        if idx == 0:
+            ax.plot(seg_lon, seg_lat, 'r-', linewidth=2.5, 
+                   label='Traza satelital', zorder=3)
+        else:
+            ax.plot(seg_lon, seg_lat, 'r-', linewidth=2.5, zorder=3)
+    
+    # Marcar inicio y fin
+    ax.plot(longitudes[0], latitudes[0], 'go', markersize=14, 
+           label='Inicio', zorder=5,
+           markeredgecolor='darkgreen', markeredgewidth=2)
+    
+    ax.plot(longitudes[-1], latitudes[-1], 'rs', markersize=14, 
+           label='Fin', zorder=5,
+           markeredgecolor='darkred', markeredgewidth=2)
+    
+    # Configuración de ejes
+    ax.set_xlim(-180, 180)
+    ax.set_ylim(-90, 90)
+    ax.set_xlabel('Longitud (°)', fontsize=12)
+    ax.set_ylabel('Latitud (°)', fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold', pad=15)
+    ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
+    ax.legend(loc='lower left', fontsize=10, framealpha=0.9)
+    ax.set_aspect('equal')
+    
+    # Etiquetas de grid
+    ax.set_xticks(range(-180, 181, 60))
+    ax.set_yticks(range(-90, 91, 30))
+    
+    # Información adicional
+    info_text = f"Tiempo simulado: {t[-1]/3600:.1f} horas\n"
+    info_text += f"Latitud: {latitudes.min():.1f}° a {latitudes.max():.1f}°\n"
+    info_text += f"Órbitas: {len(segments)} segmentos\n"
+    if earth_rotation:
+        info_text += "Rotación terrestre: Habilitada"
+    else:
+        info_text += "Rotación terrestre: Deshabilitada"
+    
+    ax.text(0.98, 0.02, info_text, transform=ax.transAxes,
+           verticalalignment='bottom', horizontalalignment='right',
+           fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.9))
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"✓ Figura guardada: {save_path}")
+    
+    if show:
+        plt.show()
+    
+    return fig, ax
