@@ -150,6 +150,26 @@ python examples/visualize_orbit.py
 
 **Método de integración:** DOP853 (Dormand-Prince orden 8) con tolerancias rtol=1e-10, atol=1e-12
 
+
+### Validación Contra Biblioteca de Referencia
+
+**Poliastro 0.17.0** (biblioteca estándar en astrodinámica Python):
+
+| Test | Resultado |
+|------|-----------|
+| Conversión de elementos - Circular | ✅ PASS |
+| Conversión de elementos - Elíptica | ✅ PASS |
+| Conversión de elementos - Polar | ✅ PASS |
+| Conservación orbital - Circular (1 periodo) | ✅ PASS |
+| Conservación orbital - Elíptica (1 periodo) | ✅ PASS |
+| Propagación corta - 10 minutos | ✅ PASS |
+
+**Conclusión:** Implementación validada como físicamente correcta y compatible con estándar de industria.
+
+**Nota técnica:** La validación requiere Python 3.10 (poliastro incompatible con 3.11). Se ejecuta en entorno separado `venv_validation`.
+
+
+
 ## 🛠️ Stack Técnico
 
 - **Python 3.11+** - Lenguaje principal
