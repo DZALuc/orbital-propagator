@@ -5,7 +5,8 @@ Simulador de mecánica orbital en Python para análisis de trayectorias satelita
 ![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/estado-activo-success)
-
+![Version](https://img.shields.io/badge/version-v2.0.0-blue)
+![Projects](https://img.shields.io/badge/proyectos-2%2F7-orange)
 ## 📋 Descripción General
 
 Propagador orbital numérico de alta precisión que implementa mecánica clásica de dos cuerpos con soporte para perturbaciones. Diseñado para aplicaciones de ingeniería aeroespacial, análisis de misiones y propósitos educativos.
