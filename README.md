@@ -169,6 +169,170 @@ python examples/visualize_orbit.py
 **Nota técnica:** La validación requiere Python 3.10 (poliastro incompatible con 3.11). Se ejecuta en entorno separado `venv_validation`.
 
 
+---
+
+## 🚀 Proyecto 2: Low-Thrust Trajectory Optimizer
+
+Optimizador de trayectorias para satélites con **propulsión eléctrica** (bajo empuje continuo). Demuestra cómo motores iónicos/Hall pueden lograr transferencias orbitales con **ahorro masivo de propelente** comparado con propulsión química.
+
+### 🎯 Características
+
+- ✅ **Propagador con empuje continuo** - Integración de ecuaciones con masa variable
+- ✅ **Búsqueda automática de tiempo óptimo** - Algoritmo de bisección para transferencias precisas
+- ✅ **Comparación química vs eléctrica** - Análisis cuantitativo de trade-offs
+- ✅ **Múltiples casos de estudio** - LEO→GEO, LEO→Molniya, estrategias híbridas
+- ✅ **Visualizaciones 3D avanzadas** - Trayectorias espiral, evolución temporal, perfiles de empuje
+
+### 📊 Resultados Principales
+
+#### Transferencia LEO → GEO (Órbita Geoestacionaria)
+
+| Método | Propelente | % Masa | Tiempo | Ahorro |
+|--------|-----------|--------|--------|--------|
+| **Hohmann (químico)** | 51.13 kg | 73.0% | 5 horas | — |
+| **Bajo empuje (eléctrico)** | 18.80 kg | 26.9% | 32 días | **63.2%** |
+
+**Precisión alcanzada:** Error de 20 km (0.05%)  
+**Factor de mejora:** 2.72x más eficiente
+
+#### Transferencia LEO → Molniya (Órbita Elíptica Rusa)
+
+| Método | Propelente | % Masa | Tiempo | Ahorro |
+|--------|-----------|--------|--------|--------|
+| **Hohmann (químico)** | 72.91 kg | 97.2% | 1 día | — |
+| **Bajo empuje (eléctrico)** | 25.00 kg | 33.3% | 60 días | **65.7%** |
+
+**Factor de mejora:** 2.92x más eficiente
+
+> **Nota:** Con químico se necesitaría 97% de la masa como propelente (físicamente inviable). La propulsión eléctrica hace esta misión **posible**.
+
+### 🔬 Fundamentos Teóricos
+
+**Ecuaciones de movimiento con empuje:**
+
+d²r/dt² = -μ/r³ · r + (T/m) · û
+dm/dt = -T / (Isp × g₀)
+Donde:
+T = empuje (N)
+m = masa actual (kg)
+û = dirección unitaria de empuje
+Isp = impulso específico (s)
+
+**Trade-off fundamental:**
+
+| Tipo | Empuje | Isp | Ventaja | Desventaja |
+|------|--------|-----|---------|------------|
+| **Químico** | Alto (kN) | Bajo (~300s) | Rápido | Ineficiente |
+| **Eléctrico** | Bajo (mN) | Alto (~1500s) | Eficiente | Lento |
+
+**Resultado:** Factor 2-3x menos propelente con eléctrico, pero transferencias de semanas/meses vs horas.
+
+### 💻 Ejemplo de Uso
+
+```python
+from src.low_thrust import LowThrustPropagator, SpacecraftModel, tangential_thrust
+import numpy as np
+
+# Configurar nave con Hall thruster
+spacecraft = SpacecraftModel(
+    thrust=0.1,        # 100 mN (típico Hall thruster)
+    isp=1500,          # s (impulso específico)
+    m_dry=50.0,        # kg (masa seca)
+    m_propellant=20.0  # kg (propelente inicial)
+)
+
+# Condiciones iniciales (LEO 400 km)
+R_earth = 6371e3
+r0 = np.array([R_earth + 400e3, 0.0, 0.0])
+v0 = np.array([0.0, 7669.0, 0.0])
+
+# Propagar 32 días con empuje tangencial
+prop = LowThrustPropagator()
+solution = prop.propagate_with_thrust(
+    r0, v0, spacecraft.m_total,
+    (0, 32*86400),  # 32 días en segundos
+    spacecraft,
+    tangential_thrust  # Ley de empuje
+)
+
+# Analizar resultado
+m_final = solution['m'][-1]
+propellant_used = spacecraft.m_total - m_final
+
+print(f"Propelente consumido: {propellant_used:.2f} kg")
+print(f"Radio final: {np.linalg.norm(solution['r'][-1])/1e3:.1f} km")
+```
+
+### 📁 Scripts de Ejemplo
+
+```bash
+# Transferencia óptima LEO → GEO
+python examples/optimize_leo_to_geo.py
+
+# Órbita Molniya (elíptica inclinada)
+python examples/transfer_to_molniya.py
+
+# Comparación de estrategias de empuje
+python examples/simple_optimization_demo.py
+```
+
+### 🌍 Aplicaciones Reales
+
+Sistemas que **ya usan** propulsión eléctrica:
+
+- **Starlink (SpaceX)** - Hall thrusters para elevar órbitas (~60% ahorro vs químico)
+- **Cubesats modernos** - Propulsión iónica para misiones extendidas
+- **BepiColombo (ESA)** - Iónica para transfer Tierra→Mercurio
+- **Dawn (NASA)** - Primera misión con propulsión iónica a asteroides (Vesta, Ceres)
+- **Psyche (NASA)** - Hall thrusters para misión a asteroide metálico
+
+### 📈 Visualizaciones
+
+**Transferencia LEO → GEO (Trayectoria 3D):**
+
+![Transfer LEO-GEO](docs/low_thrust_trajectory_3d.png)
+
+**Evolución Temporal (Altitud, Masa, Velocidad):**
+
+![Análisis Temporal](docs/low_thrust_analysis.png)
+
+**Órbita Molniya (Before/After):**
+
+![Molniya Orbit](docs/molniya_orbit.png)
+
+**Evolución hacia Molniya:**
+
+![Molniya Evolution](docs/molniya_evolution.png)
+
+**Comparación de Estrategias:**
+
+![Estrategias](docs/simple_optimization_comparison.png)
+
+### 🎓 Implicaciones para Diseño de Misiones
+
+**Cuándo usar propulsión eléctrica:**
+- ✅ Misiones donde masa es crítica (CubeSats)
+- ✅ Transferencias no urgentes (meses disponibles)
+- ✅ Misiones de larga duración con múltiples maniobras
+- ✅ Cuando hay energía solar abundante
+
+**Cuándo usar químico:**
+- ✅ Lanzamientos y maniobras de emergencia
+- ✅ Transferencias urgentes (horas/días)
+- ✅ Cuando empuje alto es necesario
+- ✅ Misiones tripuladas (seguridad/tiempo)
+
+### 📚 Referencias Adicionales
+
+- **Kluever, C.** (2018). *Space Flight Dynamics* - Capítulo sobre Low-Thrust Optimization
+- **Betts, J.** (1998). "Survey of Numerical Methods for Trajectory Optimization". *Journal of Guidance, Control, and Dynamics*
+- **NASA Glenn Research Center** - Electric Propulsion Database
+
+---
+
+
+
+
 
 ## 🛠️ Stack Técnico
 
