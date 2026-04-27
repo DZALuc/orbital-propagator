@@ -402,20 +402,98 @@ orbital-propagator/
 - [x] Perturbación J2 (achatamiento terrestre)
 - [x] Conversión de elementos orbitales (Cartesianos ↔ Keplerianos)
 - [x] Validación numérica con 6 tipos de órbitas
-- [ ] Validación contra poliastro/GMAT
+- [x] Validación contra poliastro/GMAT
 
-### Fase 3: Características Avanzadas 🚧 (En Progreso)
-- [ ] Modelado de propulsión eléctrica de bajo empuje
-- [ ] Arrastre atmosférico (modelo exponencial)
-- [ ] Perturbaciones de tercer cuerpo (Luna, Sol)
-- [ ] Visualización de trazas terrestres
-- [ ] Calculadora de ΔV para misiones
+### Fase 3: Propulsión Eléctrica ✅ (Completada)
+- [x] Modelado de propulsión eléctrica de bajo empuje
+- [x] Optimización de trayectorias LEO→GEO
+- [x] Casos de estudio (Molniya, múltiples estrategias)
+- [x] Búsqueda automática de tiempo óptimo
+- [x] Comparación cuantitativa químico vs eléctrico
 
-### Fase 4: Optimización (Futuro)
-- [ ] Perfilado y optimización de rendimiento
-- [ ] Integradores simplécticos para estabilidad a largo plazo
-- [ ] Propagación paralela para análisis Monte Carlo
-- [ ] Aceleración con C/Cython para bucles críticos
+### Fase 4: Herramientas de Misión 🚧 (Jun-Jul 2026)
+- [ ] **Proyecto 3:** Mission ΔV Calculator (Próximo - Jun 2026)
+  - Calculadora de ΔV para maniobras comunes
+  - Hohmann, bi-elliptic, cambios de plano
+  - Comparación de estrategias
+  - Base de datos de misiones típicas
+
+- [ ] **Proyecto 4:** Rocket Equation & Propulsion Comparison Tool (Jul 2026)
+  - Implementación completa ecuación Tsiolkovsky
+  - Comparación Isp de diferentes propulsores
+  - Trade-offs químico vs eléctrico vs nuclear
+  - Calculadora de masa estructural
+
+### Fase 5: Física de Plasmas & Propulsión (Ago-Sep 2026)
+- [ ] **Proyecto 5:** Ion Thruster Simple Model (Ago 2026)
+  - Modelo 0D/1D de thruster de xenón
+  - Física básica de ionización
+  - Cálculo de empuje e Isp
+  - Comparación con datos reales
+
+- [ ] **Proyecto 6:** Hall Thruster Basic Simulation (Sep 2026)
+  - Campos E×B en canal anular
+  - Simulación de deriva de electrones
+  - Erosión preliminar de paredes
+  - Validación contra thruster SPT-100
+
+### Fase 6: CFD & Simulación Avanzada (Oct-Ene 2027)
+- [ ] **Proyecto 7:** Plume Expansion CFD (Oct-Nov 2026)
+  - OpenFOAM o código propio
+  - Expansión de pluma en vacío
+  - Efectos de contaminación
+  - Visualización 3D de densidad/velocidad
+
+- [ ] **Proyecto 8:** Particle-in-Cell (PIC) Code (Dic 2026-Ene 2027)
+  - Simulador PIC desde cero
+  - Partículas cargadas + campos autoconsistentes
+  - Aplicación a thrusters de plasma
+  - **Diferenciador clave del portfolio**
+
+### Fase 7: Física Teórica Avanzada ⭐ (Ene-Feb 2027)
+- [ ] **Proyecto 8.5:** Gravitomagnetic Field Simulator (Li-Torr Model) 🌟
+  - **Motivación:** Investigación de Amy Eskridge y Ning Li
+  - Implementación ecuaciones Li-Torr (Physical Review D, 1991)
+  - Simulación campos gravitomagnéticos en superconductores
+  - Modelado de alineación coherente de espines iónicos
+  - Comparación con Efecto Podkletnov (experimental)
+  - Análisis de sensibilidad de parámetros
+  - **Único en su tipo:** Nadie ha hecho esto públicamente en Python
+  - **Valor:** Intersección física teórica + propulsión avanzada
+  - **Aplicación:** NASA Marshall, DARPA, startups de propulsión
+  - **Publicable:** arXiv preprint
+
+### Fase 8: Integración & Portfolio Final (Mar-Abr 2027)
+- [ ] **Proyecto 9:** Electric Propulsion Performance Tool (Mar 2027)
+  - Integrador de todos los proyectos anteriores
+  - Interfaz unificada para diseño de misiones
+  - Análisis completo: órbita + propulsión + plasma
+
+- [ ] **Proyecto 10:** Digital Twin de Hall Thruster (Abr 2027)
+  - Opcional avanzado
+  - Sistema completo integrado
+  - Matching con datos experimentales reales
+
+### Proyectos Especiales (Timing Flexible)
+- [ ] **Proyecto 7.5:** Alcubierre Drive Visualizer
+  - Visualización de métrica de Alcubierre
+  - Animación de burbuja warp
+  - Cálculo de requerimientos energéticos
+  - Educativo/divulgación
+
+---
+
+## 📊 Progreso del Roadmap
+
+**Estado actual:** 2/10+ proyectos completados (20%)
+
+**Timeline total:** 20 meses (Abr 2026 - Dic 2027)
+
+**Objetivo:** Portfolio profesional + publicaciones + preparación para maestría
+
+**Nivel actual alcanzado:** Comparable a herramientas profesionales básicas
+
+**Próximo hito:** Proyecto 3 (Mission ΔV Calculator) - Jun 2026
 
 ## 📖 Referencias
 
