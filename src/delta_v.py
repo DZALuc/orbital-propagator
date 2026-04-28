@@ -1013,6 +1013,75 @@ def rendezvous_simple(r1, r2, phase_angle_degrees, mu=GM_earth):
     }
 
 
+
+
+def rendezvous_realistic(r1, r2, phase_angle_degrees, time_available_hours=24, mu=GM_earth):
+    """
+    Rendezvous más realista usando tiempo disponible.
+    
+    En vez de minimizar ΔV puro, optimiza para un tiempo dado,
+    que es más parecido a cómo se planean misiones reales.
+    
+    Parameters:
+    -----------
+    r1, r2 : float
+        Radios inicial y final (m)
+    phase_angle_degrees : float
+        Diferencia de fase (grados)
+    time_available_hours : float, optional
+        Tiempo disponible para completar rendezvous (horas)
+    mu : float, optional
+        Parámetro gravitacional
+    
+    Returns:
+    --------
+    result : dict
+        Plan de rendezvous optimizado para tiempo dado
+    """
+    # Hohmann
+    hohmann = hohmann_transfer(r1, r2, mu)
+    
+    # Tiempo restante para phasing
+    time_phasing_available = (time_available_hours * 3600) - hohmann['transfer_time']
+    
+    if time_phasing_available <= 0:
+        # No hay tiempo para phasing
+        return {
+            'feasible': False,
+            'reason': 'Insufficient time for phasing',
+            'time_needed': hohmann['transfer_time'] / 3600
+        }
+    
+    # Periodo en órbita final
+    T_target = 2 * np.pi * np.sqrt(r2**3 / mu)
+    
+    # Número de órbitas disponibles para phasing
+    n_orbits_available = time_phasing_available / T_target
+    
+    # Calcular phasing con ese número de órbitas
+    try:
+        phasing = phasing_orbit(r2, phase_angle_degrees, n_orbits=int(n_orbits_available), mu=mu)
+    except:
+        # Si falla, usar menos órbitas
+        phasing = phasing_orbit(r2, phase_angle_degrees, n_orbits=max(1, int(n_orbits_available/2)), mu=mu)
+    
+    # Total
+    delta_v_total = hohmann['delta_v_total'] + phasing['delta_v_total']
+    time_total = hohmann['transfer_time'] + phasing['phasing_time']
+    
+    return {
+        'feasible': True,
+        'hohmann': hohmann,
+        'phasing': phasing,
+        'delta_v_total': delta_v_total,
+        'time_total_seconds': time_total,
+        'time_total_hours': time_total / 3600,
+        'time_constraint_hours': time_available_hours,
+        'description': f'Realistic rendezvous in {time_available_hours}h'
+    }
+
+
+
 def coplanar_rendezvous_dv(delta_r, delta_v_tangent, delta_v_radial=0):
     """
     Aproximación de ΔV para rendezvous de rango cercano (< 100 km).
@@ -1275,6 +1344,22 @@ if __name__ == "__main__":
     print("    • Optimización de trayectoria")
     print("    • Phasing durante transfer (no después)")
     print("    • Aprovechamiento de perturbaciones (J2)")
+    
+
+
+    # Test 11: Rendezvous realista (con constraint de tiempo)
+    print("\n[Test 11] Rendezvous Realista (24 horas disponibles)")
+    
+    rdv_real = rendezvous_realistic(r_departure, r_iss, 120, time_available_hours=24)
+    
+    if rdv_real['feasible']:
+        print(f"  Tiempo total: {rdv_real['time_total_hours']:.1f} horas")
+        print(f"  ΔV total: {rdv_real['delta_v_total']:.1f} m/s")
+        print(f"  Phasing: {rdv_real['phasing']['delta_v_total']:.1f} m/s ({rdv_real['phasing']['n_orbits_phasing']:.1f} órbitas)")
+        print(f"\n  → Más realista que optimización pura de ΔV")
+
+
+
     
     print("\n" + "="*70)
     print("✓ Módulo delta_v.py - Sección 1-5 completa")
