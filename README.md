@@ -333,6 +333,219 @@ Sistemas que **ya usan** propulsión eléctrica:
 
 
 
+---
+
+## 🧮 Proyecto 3: Mission ΔV Calculator
+
+Calculadora completa de ΔV para planificación de misiones orbitales. Herramienta tipo "navaja suiza" para análisis preliminares.
+
+### 🎯 Características
+
+- ✅ **Hohmann transfers** - Circular, elíptico, cualquier par de órbitas
+- ✅ **Bi-elliptic transfers** - Optimización automática, comparación vs Hohmann
+- ✅ **Plane changes** - Simple, combinado, análisis de estrategias
+- ✅ **Escape & Interplanetary** - Velocidades hiperbólicas, Tierra→Marte
+- ✅ **Phasing & Rendezvous** - Encuentros orbitales, constraint de tiempo
+- ✅ **Calculadora interactiva** - CLI fácil de usar
+- ✅ **Base de datos** - Órbitas comunes, misiones históricas, propulsores
+- ✅ **Visualizaciones** - 6 gráficas comparativas profesionales
+
+### 📊 Resultados Destacados
+
+#### Comparación Hohmann vs Bi-elliptic
+
+| Ratio r₂/r₁ | Hohmann | Bi-elliptic | Mejor |
+|-------------|---------|-------------|-------|
+| 2.0 | 2,182 m/s | 2,411 m/s | Hohmann |
+| 11.94 | 4,098 m/s | 4,102 m/s | **Empate** (crítico) |
+| 15.0 | 4,114 m/s | 4,005 m/s | **Bi-elliptic** |
+| 30.0 | 4,047 m/s | 3,767 m/s | **Bi-elliptic** (-7%) |
+
+**Conclusión:** Bi-elliptic es mejor para ratio > 11.94, pero toma mucho más tiempo.
+
+#### Cambios de Plano (muy costosos)
+
+| Δi | ΔV (LEO) | ΔV (GEO) | Ratio |
+|----|----------|----------|-------|
+| 10° | 1,337 m/s | 536 m/s | **2.5x** |
+| 28.5° | 3,777 m/s | 1,592 m/s | **2.4x** |
+| 90° | 10,851 m/s | 4,349 m/s | **2.5x** |
+
+**Implicación:** Siempre hacer cambios de plano en la órbita más alta (menor velocidad).
+
+#### Estrategias para Maniobra Combinada (LEO→GEO + 28.5°)
+
+| Estrategia | ΔV total | Nota |
+|------------|----------|------|
+| Plano en LEO + Hohmann | 7,634 m/s | ❌ Muy costoso |
+| Hohmann + Plano en GEO | 5,370 m/s | ⚠️ Secuencial |
+| **Combinado en GEO** | **4,224 m/s** | ✅ **Óptimo** |
+
+**Ahorro:** 3,410 m/s (45%) vs estrategia naive.
+
+#### Rendezvous: Optimización vs Realista
+
+| Escenario | ΔV | Tiempo | Método |
+|-----------|-----|--------|--------|
+| Optimización pura (min ΔV) | 411 m/s | 8.5 h | max_orbits=5 |
+| **Realista (24h disponibles)** | **176 m/s** | **23.9 h** | Usa tiempo inteligentemente |
+| Dragon real (ISS) | ~100 m/s | 24-48 h | Lambert + J2 + multi-impulso |
+
+**Factor vs real:** 1.76x (excelente para análisis preliminar).
+
+### 💻 Calculadora Interactiva
+
+```bash
+$ python examples/delta_v_calculator.py
+
+======================================================================
+               
+
+**Menú:**[1] Hohmann Transfer
+[2] Bi-elliptic Transfer
+[3] Plane Change
+[4] Combined Transfer + Plane Change
+[5] Escape Velocity
+[6] Interplanetary (Earth → Mars)
+[7] Rendezvous Planning
+[8] Compare All Strategies
+[9] Common Missions (Database)
+
+**Ejemplo de uso:**Selecciona una opción: 1
+Altitud inicial (km): 400
+Altitud final (km): 35786RESULTADOS:
+ΔV₁ (primer impulso):   2,399.4 m/s
+ΔV₂ (segundo impulso):  1,457.2 m/s
+ΔV total:               3,856.6 m/s
+Tiempo de transferencia: 5.29 horasPROPELENTE NECESARIO (estimado):
+Químico bajo    (Isp= 300s): 73.0% masa total
+Químico alto    (Isp= 450s): 56.1% masa total
+Eléctrico       (Isp=1500s): 23.2% masa total
+
+### 🗄️ Base de Datos
+
+**Órbitas disponibles:**
+- LEO (200, 400 km), ISS (408 km), Starlink (550 km)
+- SSO polar (800 km), GPS (20,200 km)
+- GEO (35,786 km), Molniya, Tundra
+- Lunar transfer
+
+**Misiones históricas:**
+- Apollo 11, Space Shuttle, Voyager, New Horizons
+- Dawn, BepiColombo, Mars Science Laboratory
+
+**Sistemas de propulsión:**
+- Químico: RL-10, Merlin 1D, Hydrazine
+- Eléctrico: SPT-100, NSTAR, Starlink Hall
+
+### 📊 Visualizaciones
+
+**6 gráficas profesionales generadas:**
+
+1. **Hohmann vs Bi-elliptic** - Ratio crítico 11.94
+2. **Plane change cost** - Absoluto y relativo
+3. **Combined strategies** - LEO→GEO optimización
+4. **Phasing trade-off** - ΔV vs tiempo
+5. **Mission comparison** - 6 misiones comunes
+6. **Propellant mass fraction** - Ecuación Tsiolkovsky
+
+![Delta-V Hohmann vs Bielliptic](docs/delta_v_hohmann_vs_bielliptic.png)
+![Plane Change Cost](docs/delta_v_plane_change.png)
+![Mission Comparison](docs/delta_v_mission_comparison.png)
+
+### 🎓 Fundamentos Teóricos
+
+**Ecuación de Tsiolkovsky:**ΔV = Isp × g₀ × ln(m_initial / m_final)Para LEO→GEO (ΔV = 3,857 m/s):
+Isp=300s  → 73% propelente
+Isp=450s  → 56% propelente
+Isp=1500s → 23% propelente
+
+**Cambio de plano:**ΔV = 2 × v × sin(Δi/2)Para Δi = 90°:
+ΔV = 2v × sin(45°) = 1.414v
+
+**Ratio crítico bi-elliptic:**Teórico: r₂/r₁ > 11.94 (con r_intermediate → ∞)
+Práctico: Ganancia marginal (2-7%), tiempo enorme
+
+### 🔬 Validación
+
+**Comparación con valores reales:**
+
+| Misión | Calculado | Real | Factor |
+|--------|-----------|------|--------|
+| LEO→GEO (Hohmann) | 3,857 m/s | ~3,850 m/s | 1.00x ✓ |
+| Shuttle→ISS | 191 m/s | ~150 m/s | 1.27x |
+| Dragon→ISS | 176 m/s | ~100 m/s | 1.76x |
+| Earth→Mars (C3) | 2,944 m/s | ~2,950 m/s | 0.99x ✓ |
+
+**Precisión:**
+- Hohmann: ±1% (excelente)
+- Rendezvous: Factor 1.3-2x sobre real (conservador pero útil)
+- Interplanetario: ±2% (muy bueno)
+
+**Diferencias explicadas:**
+- Modelo simplificado (no J2, Lambert, multi-impulso)
+- Límite superior conservador
+- Perfecto para análisis preliminar
+
+### 🛠️ Código Desarrolladosrc/
+├── delta_v.py              (~700 líneas)
+│   ├── hohmann_transfer()
+│   ├── bielliptic_transfer()
+│   ├── plane_change()
+│   ├── combined_plane_change()
+│   ├── escape_velocity()
+│   ├── interplanetary_hohmann()
+│   ├── phasing_orbit()
+│   ├── rendezvous_realistic()
+│   └── 15+ funciones más
+│
+└── mission_database.py     (~400 líneas)
+├── ORBITS_EARTH (10+ órbitas)
+├── PLANETS (5 planetas)
+├── MISSIONS (10+ misiones)
+└── PROPULSION_SYSTEMS (6 sistemas)examples/
+├── mission_calculator.py   (~500 líneas)
+│   └── CLI interactiva con 9 opciones
+│
+└── visualize_delta_v.py    (~400 líneas)
+└── 6 funciones de graficación
+
+**Total:** ~2,000 líneas de código funcional
+
+### 📚 Aplicaciones
+
+**Para qué sirve:**
+- ✅ Análisis preliminares de misiones
+- ✅ Trade-off studies (químico vs eléctrico)
+- ✅ Estimación de propelente
+- ✅ Comparación de estrategias
+- ✅ Educación en astrodinámica
+
+**Para qué NO sirve:**
+- ❌ Planning operacional de misiones reales
+- ❌ Optimización final (requiere Lambert, J2, etc.)
+- ❌ Compliance regulatorio
+
+**Herramientas profesionales equivalentes:**
+- GMAT (NASA) - Más completo
+- STK (AGI) - Comercial
+- Este proyecto - Open source, educativo, análisis rápidos
+
+### 🎯 Valor para Portfolio
+
+**Diferenciador único:**
+- Calculadora completa y usable (no solo código)
+- Base de datos integrada
+- Visualizaciones profesionales
+- Comparable a herramientas comerciales (nivel básico)
+
+**Narrativa para entrevistas:**"Desarrollé una calculadora completa de ΔV que cubre todas las
+maniobras orbitales estándar: Hohmann, bi-elliptic, cambios de
+plano, escape, rendezvous. Incluye una CLI interactiva, base de
+datos de misiones históricas, y genera 6 visualizaciones comparativas.
+Los resultados están dentro de 1-2x de valores reales, perfecto para
+análisis preliminares. Total: 2,000 líneas de código Python funcional."
+
 
 
 ## 🛠️ Stack Técnico
