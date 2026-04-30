@@ -15,6 +15,7 @@ from src.delta_v import *
 import numpy as np
 
 from src.mission_database import ORBITS_EARTH, MISSIONS, get_orbit
+from src.visualization_3d import quick_visualize_mission, visualize_common_mission
 
 
 
@@ -77,9 +78,12 @@ def option_hohmann():
     print("HOHMANN TRANSFER")
     print("─"*70)
     
-    r1 = get_altitude("Altitud inicial (km): ")
-    r2 = get_altitude("Altitud final (km): ")
+    h_initial = get_altitude("Altitud inicial (km): ")
+    h_final = get_altitude("Altitud final (km): ")
     
+    r1 = R_earth + h_initial * 1000
+    r2 = R_earth + h_final * 1000
+
     result = hohmann_transfer(r1, r2)
     
     print("\nRESULTADOS:")
@@ -96,6 +100,22 @@ def option_hohmann():
         
         tipo = "Químico bajo" if isp == 300 else ("Químico alto" if isp == 450 else "Eléctrico")
         print(f"  {tipo:15s} (Isp={isp:4d}s): {propellant_fraction*100:.1f}% masa total")
+
+    # NUEVO: Opción de visualización
+    print("\n" + "─"*70)
+    viz = input("¿Visualizar en 3D? (s/n): ").lower()
+    
+    if viz == 's':
+        print("\nGenerando visualización 3D...")
+        quick_visualize_mission(
+            r1/1000, r2/1000,
+            f"Initial ({h_initial:.0f} km)",
+            f"Final ({h_final:.0f} km)",
+            show=True,
+            save=True,
+            filename=f"hohmann_{h_initial:.0f}_{h_final:.0f}"
+        )
+        print("✓ Visualización abierta en navegador")
 
 
 def option_bielliptic():
@@ -361,6 +381,27 @@ def option_common_missions():
         print(f"    Penalización: +{combined['penalty_vs_hohmann']:,.1f} m/s")
 
 
+    # NUEVO: Visualización automática
+    print("\n" + "─"*70)
+    viz = input("¿Visualizar en 3D? (s/n): ").lower()
+    
+    if viz == 's':
+        print("\nGenerando visualización 3D...")
+        
+        if delta_i > 0.1:
+            from src.visualization_3d import visualize_plane_change_transfer
+            plotter = visualize_plane_change_transfer(
+                r1/1000, r2/1000, delta_i,
+                orbit1['name'], orbit2['name']
+            )
+        else:
+            plotter = visualize_common_mission((orbit1_key, orbit2_key))
+        
+        from src.visualization_3d import save_plot_html
+        save_plot_html(plotter, f"mission_{orbit1_key}_{orbit2_key}")
+        plotter.show()
+        
+        print("✓ Visualización abierta en navegador")
 
 
 
