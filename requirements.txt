@@ -16,6 +16,7 @@ scipy==1.17.1
 six==1.17.0
 cartopy>=0.22.0
 poliastro>=0.17.0
-
+plotly>=5.0.0
+kaleido>=0.2.1
 # Validación (requiere Python 3.10 en entorno separado)
 # poliastro>=0.17.0
