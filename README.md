@@ -440,6 +440,39 @@ Eléctrico       (Isp=1500s): 23.2% masa total
 
 ### 📊 Visualizaciones
 
+### 🌐 Visualización 3D Interactiva
+
+**Nuevo:** Visualizaciones 3D interactivas con poliastro + Plotly
+
+```bash
+# Desde la calculadora
+python examples/mission_calculator.py
+
+# Seleccionar opción y visualizar en 3D
+[1] Hohmann Transfer → ¿Visualizar en 3D? (s/n): s
+[9] Common Missions → ¿Visualizar en 3D? (s/n): s
+
+# O generar directamente
+python src/visualization_3d.py
+```
+
+**Características:**
+- 🔄 Rotación 3D con mouse
+- 🔍 Zoom in/out
+- 📐 Pan y múltiples vistas
+- 💾 Export a HTML standalone
+- 🌍 Tierra en el centro
+- 🛰️ Órbitas circulares y elípticas
+- 📊 Transferencias Hohmann
+- ↗️ Cambios de plano visualizados
+
+**Output:** Archivos HTML interactivos en `docs/interactive/`
+
+![Visualización 3D ejemplo](docs/interactive/visualization_3d_preview.png)
+
+
+
+
 **6 gráficas profesionales generadas:**
 
 1. **Hohmann vs Bi-elliptic** - Ratio crítico 11.94
