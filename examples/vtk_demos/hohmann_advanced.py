@@ -634,5 +634,20 @@ Visualización:
 
 
 if __name__ == "__main__":
-    sim = AdvancedHohmannSimulator(h1_km=400, h2_km=35786)
+    import sys
+    
+    # Revisar si se pasaron argumentos desde línea de comando
+    if len(sys.argv) >= 3:
+        try:
+            h1 = float(sys.argv[1])
+            h2 = float(sys.argv[2])
+            print(f"Argumentos recibidos: h1={h1} km, h2={h2} km")
+        except:
+            print("Error parseando argumentos, usando valores por defecto")
+            h1, h2 = 400, 35786
+    else:
+        # Valores por defecto
+        h1, h2 = 400, 35786
+    
+    sim = AdvancedHohmannSimulator(h1_km=h1, h2_km=h2)
     sim.run()

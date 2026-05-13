@@ -6,14 +6,13 @@ Calculadora interactiva para planear maniobras orbitales.
 Author: Damián Zúñiga Avelar
 Date: Abril 2026
 """
-
+import subprocess
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.delta_v import *
 import numpy as np
-
 from src.mission_database import ORBITS_EARTH, MISSIONS, get_orbit
 from src.visualization_3d import quick_visualize_mission, visualize_common_mission
 
@@ -42,22 +41,41 @@ def print_menu():
     print("  [7] Rendezvous Planning")
     print("  [8] Compare All Strategies")
     print("  [9] Common Missions (Database)") 
+    print("  [10] 🚀 Ver Transferencia en 3D (VTK Simulator)")
+    print("  [11] 🎮 Menú de Simuladores Disponibles")  
     print("  [0] Salir")
     print()
 
 
-def get_altitude(prompt):
-    """Obtener altitud del usuario (en km) y convertir a radio (m)."""
+def get_altitude(prompt="Altitud (km): "):
+    """
+    Pide altitud al usuario con validación.
+    
+    Parameters
+    ----------
+    prompt : str
+        Mensaje para el usuario
+    
+    Returns
+    -------
+    float or None
+        Altitud en km, o None si se presiona Enter
+    """
     while True:
         try:
-            alt_km = float(input(prompt))
-            if alt_km < 0:
-                print("  ⚠️  Altitud debe ser positiva")
+            value = input(prompt).strip()
+            if value == "":
+                return None  # Permitir default
+            h = float(value)
+            if h < 0:
+                print("  ⚠️  La altitud debe ser positiva")
                 continue
-            return R_earth + alt_km * 1e3
+            if h > 100000:
+                print("  ⚠️  Altitud muy alta (máximo 100,000 km)")
+                continue
+            return h
         except ValueError:
-            print("  ⚠️  Por favor ingresa un número válido")
-
+            print("  ⚠️  Valor no válido, intenta de nuevo")
 
 def get_angle(prompt):
     """Obtener ángulo del usuario (grados)."""
@@ -403,6 +421,195 @@ def option_common_missions():
         
         print("✓ Visualización abierta en navegador")
 
+    
+    # Opción de visualización VTK
+    print("\n" + "─"*70)
+    viz_option = input("Visualización: [1] 3D poliastro (HTML)  [2] 3D VTK (animado)  [0] Ninguna: ").strip()
+    
+    if viz_option == '1':
+        # Visualización poliastro (código existente)
+        print("\n  Generando visualización 3D poliastro...")
+        
+        try:
+            if delta_i > 0.1:
+                from src.visualization_3d import visualize_plane_change_transfer
+                plotter = visualize_plane_change_transfer(
+                    r1/1000, r2/1000, delta_i,
+                    orbit1['name'], orbit2['name']
+                )
+            else:
+                plotter = visualize_common_mission((orbit1_key, orbit2_key))
+            
+            save_plot_html(plotter, f"mission_{orbit1_key}_{orbit2_key}")
+            plotter.show()
+            
+            print("  ✓ Visualización poliastro abierta en navegador")
+        except Exception as e:
+            print(f"  ⚠️  Error: {e}")
+    
+    elif viz_option == '2':
+        # Visualización VTK
+        print("\n🚀 Lanzando simulador VTK...")
+        print("  (Abrirá ventana 3D animada)")
+        
+        h1 = orbit1['altitude_km']
+        h2 = orbit2['altitude_km']
+        
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        simulator_path = os.path.join(script_dir, 'vtk_demos', 'hohmann_advanced.py')
+        
+        if os.path.exists(simulator_path):
+            try:
+                import subprocess
+                python_exe = sys.executable
+                subprocess.run([python_exe, simulator_path, str(h1), str(h2)])
+            except Exception as e:
+                print(f"  ⚠️  Error: {e}")
+        else:
+            print(f"  ⚠️  No se encontró: {simulator_path}")
+
+
+
+def option_10_vtk_simulator():
+    """Opción 10: Lanzar simulador VTK 3D."""
+    print("\n" + "─"*70)
+    print("🚀 VTK 3D SIMULATOR - TRANSFERENCIA HOHMANN")
+    print("─"*70)
+    
+    print("\nEste simulador muestra la transferencia Hohmann completa")
+    print("con animación en tiempo real usando VTK.")
+    print("\nOpciones:")
+    print("  [1] LEO → GEO (400 km → 35,786 km)")
+    print("  [2] LEO → MEO GPS (400 km → 20,200 km)")
+    print("  [3] Starlink → GEO (550 km → 35,786 km)")
+    print("  [4] Custom (tú defines altitudes)")
+    
+    choice = input("\nSelecciona opción: ").strip()
+    
+    # Definir altitudes según opción
+    if choice == '1':
+        h1, h2 = 400, 35786
+        name = "LEO → GEO"
+    elif choice == '2':
+        h1, h2 = 400, 20200
+        name = "LEO → MEO GPS"
+    elif choice == '3':
+        h1, h2 = 550, 35786
+        name = "Starlink → GEO"
+    elif choice == '4':
+        h1 = get_altitude("Altitud inicial (km): ")
+        h2 = get_altitude("Altitud final (km): ")
+        name = f"{h1} km → {h2} km"
+    else:
+        print("  ⚠️  Opción no válida")
+        return
+    
+    print(f"\n📊 Calculando parámetros para: {name}")
+    
+    # Calcular con nuestra función
+    r1 = R_earth + h1 * 1000
+    r2 = R_earth + h2 * 1000
+    
+    result = hohmann_transfer(r1, r2)
+    
+    print(f"\n  ΔV₁: {result['delta_v_1']:,.1f} m/s")
+    print(f"  ΔV₂: {result['delta_v_2']:,.1f} m/s")
+    print(f"  ΔV total: {result['delta_v_total']:,.1f} m/s")
+    print(f"  Tiempo: {result['transfer_time']/3600:.2f} horas")
+    
+    print("\n" + "─"*70)
+    confirm = input("¿Lanzar simulador VTK? (s/n): ").lower()
+    
+    if confirm != 's':
+        print("  Cancelado")
+        return
+    
+    print("\n🚀 Lanzando simulador VTK...")
+    print("  (Cerrando calculadora, abrirá ventana 3D)")
+    print("  Controles: [+/-] velocidad, [SPACE] pausa, [T] trail, [V] velocity")
+    print()
+    
+    # Construir ruta al simulador
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    simulator_path = os.path.join(script_dir, 'vtk_demos', 'hohmann_advanced.py')
+    
+    # Verificar que existe
+    if not os.path.exists(simulator_path):
+        print(f"  ⚠️  Error: No se encontró {simulator_path}")
+        return
+    
+    # Lanzar simulador con subprocess
+    try:
+        # Obtener el python del entorno actual
+        python_exe = sys.executable
+        
+        # Crear proceso que lanza el simulador
+        # Modificaremos el simulador para aceptar argumentos
+        subprocess.run([python_exe, simulator_path, str(h1), str(h2)])
+        
+    except Exception as e:
+        print(f"  ⚠️  Error al lanzar simulador: {e}")
+
+
+
+def option_11_simulator_menu():
+    """Opción 11: Menú de simuladores disponibles."""
+    print("\n" + "─"*70)
+    print("🎮 SIMULADORES 3D DISPONIBLES")
+    print("─"*70)
+    
+    print("\n📊 POLIASTRO (HTML Interactivo):")
+    print("  • Hohmann transfers")
+    print("  • Plane changes")
+    print("  • Múltiples órbitas")
+    print("  • Interplanetario")
+    print("  Output: HTML (rotar, zoom en navegador)")
+    
+    print("\n🚀 VTK (Animación Tiempo Real):")
+    print("  [1] Órbita simple (test_orbit_animation.py)")
+    print("  [2] Tierra texturizada (test_textured_earth.py)")
+    print("  [3] Transferencia Hohmann básica (hohmann_transfer_animated.py)")
+    print("  [4] Transferencia Hohmann avanzada (hohmann_advanced.py) ⭐")
+    
+    print("\n" + "─"*70)
+    choice = input("Selecciona simulador VTK [1-4] o [0] cancelar: ").strip()
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    vtk_dir = os.path.join(script_dir, 'vtk_demos')
+    
+    simulators = {
+        '1': 'test_orbit_animation.py',
+        '2': 'test_textured_earth.py',
+        '3': 'hohmann_transfer_animated.py',
+        '4': 'hohmann_advanced.py'
+    }
+    
+    if choice in simulators:
+        simulator_file = simulators[choice]
+        simulator_path = os.path.join(vtk_dir, simulator_file)
+        
+        if os.path.exists(simulator_path):
+            print(f"\n🚀 Lanzando {simulator_file}...")
+            
+            # Para simuladores con argumentos
+            if choice == '4':
+                h1 = get_altitude("Altitud inicial (km) [default 400]: ") or 400
+                h2 = get_altitude("Altitud final (km) [default 35786]: ") or 35786
+                args = [str(h1), str(h2)]
+            else:
+                args = []
+            
+            try:
+                import subprocess
+                python_exe = sys.executable
+                subprocess.run([python_exe, simulator_path] + args)
+            except Exception as e:
+                print(f"  ⚠️  Error: {e}")
+        else:
+            print(f"  ⚠️  No se encontró: {simulator_path}")
+    
+    elif choice != '0':
+        print("  ⚠️  Opción no válida")
 
 
 def main():
@@ -435,6 +642,10 @@ def main():
             option_compare()
         elif choice == '9':
             option_common_missions() 
+        elif choice == '10':
+            option_10_vtk_simulator()
+        elif choice == '11':
+            option_11_simulator_menu() 
         else:
             print("\n  ⚠️  Opción no válida")
         
